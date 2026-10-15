@@ -11,6 +11,10 @@ export function soundOf(pad) {
   return pad.getAttribute(SOUND_ATTRIBUTE);
 }
 
+export function keyOf(pad) {
+  return pad.getAttribute(KEY_ATTRIBUTE);
+}
+
 // A plain comparison instead of querySelector(`[data-key="${key}"]`): keys such as " or \
 // would make that selector invalid and throw.
 export function findPad(key) {

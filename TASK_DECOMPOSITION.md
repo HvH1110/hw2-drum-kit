@@ -66,13 +66,16 @@ The engine never touches the DOM or keyboard events.
 
 ### 3.4 FIFO Beat Recorder (`js/recorder.js`)
 
-- Recording: each hit is **enqueued** as `{ key, t }`, where `t` = ms since recording started
-  (`performance.now()` based, monotonic).
+- Recording: each hit is **enqueued** as `{ key, t }`, where `t` = ms after the **first hit**
+  (`performance.now()` based, monotonic), so the silence before the first hit is not replayed.
+  (Changed in T-06 from "ms since Record was pressed".)
 - Playback: events are **dequeued in insertion order** (first in, first out). Each hit is scheduled
   relative to the playback start time, so timing errors do not accumulate.
 - States: `idle` → `recording` → `idle` → `playing` → `idle`. Only one state at a time.
-- Controls: Record button (`aria-pressed` while recording), Play button, Clear button,
-  status text in `<p id="recorder-status" role="status">` (announced on state changes only).
+- Controls: Record button (`aria-pressed` while recording; press again to stop), Play button
+  (`aria-pressed` while playing; press again to stop), Clear button, status text in
+  `<p id="recorder-status" role="status">` (announced on state changes only).
+- Buttons that cannot act in the current state are `disabled` (e.g. Play while recording).
 
 ### 3.5 Layout & Quality
 
