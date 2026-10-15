@@ -75,7 +75,8 @@ The engine never touches the DOM or keyboard events.
 
 ### 3.5 Layout & Quality
 
-- Mobile-first; pad grid `repeat(auto-fit, minmax(min(96px, 100%), 1fr))` → 3×3 on a 375px phone.
+- Mobile-first; pad grid fixed at `repeat(3, minmax(0, 1fr))` with square pads → always 3×3, like a
+  hardware drum machine. (Changed in T-03: `auto-fit` gave a ragged 4 + 4 + 1 layout on wide screens.)
 - Colors only from tokens; WCAG 2.2 AA contrast in light and dark.
 - Strict CSP `<meta>` from the first HTML commit (same policy as HW1).
 - No `innerHTML`, no inline handlers, no external libraries or CDNs.
