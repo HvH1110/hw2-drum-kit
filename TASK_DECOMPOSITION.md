@@ -109,17 +109,78 @@ The engine never touches the DOM or keyboard events.
 
 ## 6. Acceptance Criteria
 
-- [ ] Every pad plays from its key, from Tab + Enter, and from a click/tap
-- [ ] Several sounds overlap without cutting each other off
-- [ ] Holding a key plays once (no flood)
-- [ ] Recorder plays hits back in recorded order with matching timing
-- [ ] Renders at 375px with zero horizontal scroll
-- [ ] Text contrast ≥ 4.5:1 in light and dark
-- [ ] Zero console errors; zero CSP violations (served with `npx serve`)
-- [ ] No inline handlers, no `innerHTML`, no external dependencies
+- [x] Every pad plays from its key, from Tab + Enter, and from a click/tap (T-04, T-05)
+- [x] Several sounds overlap without cutting each other off (T-04: 4 at once, re-hit does not cut)
+- [x] Holding a key plays once (no flood) (T-05: 1 press + 5 repeats → 1 hit)
+- [x] Recorder plays hits back in recorded order with matching timing (T-06: FIFO order, ≤ 3.6 ms error)
+- [x] Renders at 375px with zero horizontal scroll (T-07: also 320 and 1280px, both themes)
+- [x] Text contrast ≥ 4.5:1 in light and dark (T-07: Lighthouse Accessibility 100 in both)
+- [x] Zero console errors; zero CSP violations (served with `npx serve`) (T-07: also zero warnings)
+- [x] No inline handlers, no `innerHTML`, no external dependencies (T-07: code scan)
 
-## 7. AI Log
+## 7. Audit Results (T-07)
+
+Served with `npx serve` (Live Server's injected script conflicts with the CSP).
+
+| Check | Result |
+|-------|--------|
+| Horizontal overflow at 320 / 375 / 1280px, light + dark | None (scrollWidth = viewport in all 6) |
+| Console errors / warnings / CSP violations | 0 / 0 / 0 in all 6 runs |
+| Keyboard: Tab reaches every enabled control | 10/10 (9 pads + Record; Play and Clear are disabled until a beat exists) |
+| Keyboard: visible focus, Shift+Tab mirrors, no trap | Yes: 3px accent ring in both themes |
+| Lighthouse (mobile), light | Performance 100, Accessibility 100, Best Practices 100, SEO 100 |
+| Lighthouse (mobile), dark | Performance 100, Accessibility 100, Best Practices 100, SEO 100 |
+| LCP (budget 2.0s) | Simulated: 1.8s, then 1.2s and 1.2s on re-runs. Real throttling (`--throttling-method=devtools`): 1.3s |
+| CLS / TBT | 0 / 0 ms |
+| Code scan: JS `var`, `innerHTML`, `on*=`, `style=`, external URLs | None |
+
+- **No code changes were needed.**
+- **Rejected change:** loading the sounds after the `load` event, to move them off the critical
+  path. Measured result: simulated LCP got worse (2.1s, Performance 99) and real LCP did not
+  change (1.3s), so it was reverted. The first 1.8s reading was run-to-run variance of
+  Lighthouse's simulation, not a real problem.
+- **Reports:** `../lighthouse-reports/hw2-light.report.html`, `../lighthouse-reports/hw2-dark.report.html`
+  (outside the repo).
+
+## 8. AI Log
+
+AI assistant: Claude Code. Workflow: one sub-task per request; I reviewed each result in the
+browser (and listened to the sounds) before it was committed.
 
 | Task | What I asked the AI | What I checked, changed or rejected |
 |------|---------------------|-------------------------------------|
-|      |                     |                                     |
+| T-00 | Draft the HW2 plan, contracts and WBS from slide 24 | Agreed decisions: synthesize our own samples (no licensing question), Web Audio API instead of slide 23's `new Audio()`, only `pads.js` reads the `data-*` attributes, home-row keys A–L, theme follows the OS, CSP from the first HTML commit |
+| T-01 | Generate 9 drum samples with a reproducible script | Listened to all 9. Checked that Chrome decodes each file and that each sound's frequency profile matches its drum (kick 100% below 200 Hz, hi-hats 98% above 2 kHz) |
+| T-02 | HTML pad contract only (no JS) | Script check: 9 pads, unique keys, every `data-sound` file exists, `<kbd>` and `aria-keyshortcuts` match `data-key`. No skip-link: nothing repeated before `<main>` |
+| T-03 | Tokens, reset, pad grid, pad states | Grid changed to a fixed 3×3 (`auto-fit` gave 4 + 4 + 1 on wide screens). Pad outline color chosen for 3:1 contrast. Hit flash was too faint (Defect 1) |
+| T-04 | Web Audio engine + click/tap wiring | Engine has no DOM code (grep). Tested polyphony (4 at once), `stopAll()`, one hit per input type, and real Tab + Enter with the normal autoplay policy. Avoided slide 23's `querySelector(`[data-key="${key}"]`)`, which throws on the `"` key |
+| T-05 | `keydown` + `event.key` + `event.repeat` | Tested all keys, Shift/Caps Lock, 5 auto-repeats → 1 hit, Ctrl+D ignored, `"` and `\` safe. Known limit: Unikey (Telex) rewrites keys, so switch it to English while playing |
+| T-06 | FIFO beat recorder | Changed: time measured from the first hit, not from pressing Record; Play also stops. Tested order (FIFO), timing error ≤ 3.6 ms with no build-up, all button states, focus after Clear |
+| T-07 | Quality audit | Everything passed. Rejected the AI's own performance change after measuring it (Defect 2). A failing test turned out to be test timing, not a bug (Defect 3) |
+
+### AI-Induced Defects
+
+**Defect 1 — Pad flash never reached full color (T-03)**
+- **What went wrong:** the hit color used an 80 ms transition in both directions. JS removes the
+  class after ~100 ms, so the flash was still fading in when it started fading out: a pale blue
+  instead of the accent color.
+- **How it was found:** screenshot with a pad forced into the hit state, then
+  `getComputedStyle()` on the pad.
+- **Fix:** `transition: none` on the hit state, so the hit appears instantly and only the release
+  fades (150 ms). Commit `feat(css): tokens & pad grid`.
+
+**Defect 2 — Performance change made LCP worse (T-07)**
+- **What went wrong:** the first Lighthouse run showed LCP 1.8s. The AI assumed the sound downloads
+  were delaying the first paint and moved them after the `load` event.
+- **How it was found:** measured before and after, with both simulated and real throttling. After:
+  simulated LCP 2.1s (worse), real LCP unchanged (1.3s). Two re-runs of the original code gave 1.2s.
+- **Fix:** reverted (never committed). The 1.8s was simulation variance. Lesson: measure several
+  times, and with real throttling, before changing code for a metric.
+
+**Defect 3 — A flaky test looked like a memory leak (T-07)**
+- **What went wrong:** the T-04 regression test reported one sound still "playing" after it should
+  have ended, which would mean finished sounds are never cleaned up.
+- **How it was found:** traced `activeCount()` every 250 ms on two different servers: the count
+  always returned to 0 within 500 ms. Re-ran the test 3 times: 3/3 passed. The failure happened
+  right after back-to-back Lighthouse runs, when the busy machine slowed the headless audio clock.
+- **Fix:** none needed in the code. The test's fixed 900 ms wait was too tight under heavy CPU load.
