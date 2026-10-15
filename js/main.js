@@ -1,6 +1,7 @@
-// Wiring: connects the pads to the audio engine.
+// Wiring: connects the pads and the keyboard to the audio engine.
 import { load, play } from './audio-engine.js';
-import { pads, soundOf, flash } from './pads.js';
+import { pads, soundOf, findPad, flash } from './pads.js';
+import { listenForKeys } from './keyboard.js';
 
 function hit(pad) {
   play(soundOf(pad));
@@ -18,5 +19,12 @@ for (const pad of pads) {
     if (event.detail === 0) hit(pad);
   });
 }
+
+listenForKeys((key) => {
+  const pad = findPad(key);
+  if (!pad) return false;
+  hit(pad);
+  return true;
+});
 
 load(pads.map(soundOf)).catch((error) => console.error(error));
