@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self';
+                 require-trusted-types-for 'script'">
+  <title>Drum Kit | Huynh Vu Hoang</title>
+  <meta name="description"
+        content="A browser drum kit with nine synthesized drum sounds, played from the keyboard or by tap, with a beat recorder.">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+  <header>
+    <h1>Drum Kit</h1>
+    <p>Press the key shown on each pad, or tap the pad.</p>
+  </header>
+
+  <main>
+    <!-- Pad contract: data-key = lowercase KeyboardEvent.key, data-sound = sample URL.
+         This markup is the only place key bindings and sounds are defined. -->
+    <section id="pads" aria-labelledby="pads-title">
+      <h2 id="pads-title">Pads</h2>
+      <button type="button" class="drum-pad" data-key="a" data-sound="sounds/kick.wav" aria-keyshortcuts="A">
+        <kbd>A</kbd> <span class="pad-name">Kick</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="s" data-sound="sounds/snare.wav" aria-keyshortcuts="S">
+        <kbd>S</kbd> <span class="pad-name">Snare</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="d" data-sound="sounds/clap.wav" aria-keyshortcuts="D">
+        <kbd>D</kbd> <span class="pad-name">Clap</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="f" data-sound="sounds/hihat.wav" aria-keyshortcuts="F">
+        <kbd>F</kbd> <span class="pad-name">Hi-hat</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="g" data-sound="sounds/openhat.wav" aria-keyshortcuts="G">
+        <kbd>G</kbd> <span class="pad-name">Open hat</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="h" data-sound="sounds/tom-low.wav" aria-keyshortcuts="H">
+        <kbd>H</kbd> <span class="pad-name">Low tom</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="j" data-sound="sounds/tom-high.wav" aria-keyshortcuts="J">
+        <kbd>J</kbd> <span class="pad-name">High tom</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="k" data-sound="sounds/rim.wav" aria-keyshortcuts="K">
+        <kbd>K</kbd> <span class="pad-name">Rim</span>
+      </button>
+      <button type="button" class="drum-pad" data-key="l" data-sound="sounds/cowbell.wav" aria-keyshortcuts="L">
+        <kbd>L</kbd> <span class="pad-name">Cowbell</span>
+      </button>
+    </section>
+
+    <section id="recorder" aria-labelledby="recorder-title">
+      <h2 id="recorder-title">Beat Recorder</h2>
+      <p>Record a rhythm, then play it back in the same order and timing.</p>
+      <menu class="recorder-controls">
+        <li><button type="button" id="record-btn" aria-pressed="false">Record</button></li>
+        <li><button type="button" id="play-btn" aria-pressed="false" disabled>Play</button></li>
+        <li><button type="button" id="clear-btn" disabled>Clear</button></li>
+      </menu>
+      <p id="recorder-status" role="status">No beat recorded yet.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p><small>&copy; 2026 Huynh Vu Hoang &middot; All samples synthesized for this project.</small></p>
+  </footer>
+</body>
+</html>
