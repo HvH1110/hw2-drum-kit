@@ -53,6 +53,7 @@ Each JS/CSS commit adds the `<script>` or `<link>` tag for its own file to `inde
 | `load(urls)` | Fetches and decodes each URL once into an `AudioBuffer`. Returns a Promise. |
 | `play(url)` | Starts a new `AudioBufferSourceNode` for that buffer. Every call is independent, so sounds overlap (polyphony) and a re-hit restarts nothing. Resumes the `AudioContext` on first use (browser autoplay policy). |
 | `stopAll()` | Stops every sound that is currently playing. |
+| `activeCount()` | Number of sounds currently playing (used by tests to prove polyphony). |
 
 The engine never touches the DOM or keyboard events.
 
